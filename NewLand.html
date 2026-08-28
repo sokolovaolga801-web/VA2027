@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
+    <title>Карта рисков ОПО</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #e8edf2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 12px;
+        }
+
+        .card {
+            width: 700px;
+            max-width: 100%;
+            height: auto;
+            min-height: 750px;
+            background: #ffffff;
+            border-radius: 40px;
+            padding: 18px 20px 20px;
+            box-shadow: 0 12px 40px rgba(0, 20, 40, 0.15), 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #dde5ed;
+            display: flex;
+            flex-direction: column;
+            transition: min-height 0.3s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2px 8px 2px;
+            border-bottom: 2px solid #eaf0f6;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .header h2 {
+            font-weight: 600;
+            font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+            color: #1a3a5c;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header h2 span {
+            background: #eaf2fa;
+            padding: 0 14px;
+            border-radius: 30px;
+            font-size: clamp(0.55rem, 1.5vw, 0.65rem);
+            color: #2c5a7a;
+            font-weight: 500;
+            border: 1px solid #c8d8e8;
+            white-space: nowrap;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+            color: #3d6b8f;
+            background: #f0f5fb;
+            padding: 4px 12px 4px 10px;
+            border-radius: 40px;
+            border: 1px solid #d0dde8;
+            flex-shrink: 0;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #7a9bb8;
+            display: inline-block;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+
+        .dot.green {
+            background: #3ba86a;
+            box-shadow: 0 0 12px #3ba86a66;
+        }
+
+        /* схема */
+        .scheme {
+            flex: 1 1 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: clamp(8px, 2vw, 18px);
+            align-content: center;
+            padding: clamp(4px, 1vw, 10px) clamp(2px, 0.5vw, 6px);
+            min-height: 320px;
+        }
+
+        /* Центральный ОПО */
+        .opo-center {
+            grid-column: 1 / 3;
+            grid-row: 1 / 3;
+            justify-self: center;
+            align-self: center;
+            width: clamp(80px, 15vw, 130px);
+            height: clamp(80px, 15vw, 130px);
+            background: radial-gradient(circle at 30% 30%, #4f9fd4, #20638f);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 0 clamp(4px, 0.8vw, 8px) rgba(60, 130, 190, 0.12), 0 8px 24px rgba(0, 20, 40, 0.15);
+            transition: 0.4s ease;
+            text-align: center;
+            z-index: 5;
+            border: 2px solid rgba(80, 160, 220, 0.15);
+        }
+
+        .opo-center .icon {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            line-height: 1;
+        }
+
+        .opo-center .label {
+            font-weight: 700;
+            font-size: clamp(0.65rem, 1.4vw, 0.9rem);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1px 12px;
+            border-radius: 40px;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .opo-center .sub {
+            font-size: clamp(0.45rem, 0.9vw, 0.55rem);
+            color: #d4e8f5;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 1px 10px;
+            border-radius: 20px;
+            margin-top: 2px;
+            text-align: center;
+        }
+
+        /* облачка */
+        .cloud {
+            background: #f7faff;
+            border: 1.5px solid #d4e2ee;
+            border-radius: clamp(14px, 2vw, 20px) clamp(14px, 2vw, 20px) clamp(14px, 2vw, 20px) 6px;
+            padding: clamp(6px, 1.2vw, 12px) clamp(8px, 1.5vw, 14px) clamp(8px, 1.5vw, 14px);
+            box-shadow: 0 4px 12px rgba(0, 20, 40, 0.04);
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            border-left: clamp(4px, 0.6vw, 6px) solid #4a8fc7;
+            max-width: 100%;
+            overflow: visible;
+        }
+
+        .cloud:hover {
+            border-color: #8bb8d8;
+            box-shadow: 0 6px 16px rgba(0, 40, 80, 0.06);
+        }
+
+        .cloud-tl { grid-column: 1 / 2; grid-row: 1 / 2; align-self: start; justify-self: start; }
+        .cloud-tr { grid-column: 2 / 3; grid-row: 1 / 2; align-self: start; justify-self: end; }
+        .cloud-bl { grid-column: 1 / 2; grid-row: 2 / 3; align-self: end; justify-self: start; }
+        .cloud-br { grid-column: 2 / 3; grid-row: 2 / 3; align-self: end; justify-self: end; }
+
+        .cloud .q-label {
+            font-weight: 600;
+            font-size: clamp(0.5rem, 1.1vw, 0.6rem);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #3a7aa8;
+            margin-bottom: 2px;
+            flex-shrink: 0;
+        }
+
+        .cloud .question {
+            font-weight: 500;
+            font-size: clamp(0.6rem, 1.2vw, 0.75rem);
+            line-height: 1.3;
+            color: #1d3b55;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+
+        .cloud .options {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin: 2px 0 4px;
+            flex-shrink: 0;
+        }
+
+        .cloud .options label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: clamp(0.55rem, 1.1vw, 0.7rem);
+            color: #1f3f5a;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 12px;
+            transition: 0.15s;
+            line-height: 1.2;
+        }
+
+        .cloud .options label:hover {
+            background: #eaf2fa;
+        }
+
+        .cloud .options input[type="radio"] {
+            accent-color: #3a8fc7;
+            width: clamp(12px, 1.8vw, 15px);
+            height: clamp(12px, 1.8vw, 15px);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .cloud .feedback {
+            margin-top: 4px;
+            font-size: clamp(0.5rem, 1vw, 0.62rem);
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: #f0f5fa;
+            min-height: 1.6em;
+            border-left: 3px solid transparent;
+            transition: 0.2s;
+            line-height: 1.3;
+            color: #1f3f5a;
+            word-break: break-word;
+            flex-shrink: 0;
+        }
+
+        .cloud .feedback.correct {
+            border-left-color: #3ba86a;
+            background: #e6f5ed;
+            color: #1a5a3a;
+        }
+
+        .cloud .feedback.wrong {
+            border-left-color: #d45a5a;
+            background: #f5ecec;
+            color: #7a2a2a;
+        }
+
+        .cloud .feedback .law {
+            display: block;
+            font-size: clamp(0.45rem, 0.8vw, 0.55rem);
+            color: #4a7a9a;
+            margin-top: 3px;
+            opacity: 0.8;
+            border-top: 1px solid rgba(0,0,0,0.04);
+            padding-top: 3px;
+        }
+
+        .cloud.solved {
+            border-left-color: #3ba86a;
+            background: #f0faf5;
+        }
+
+        .cloud.solved .q-label {
+            color: #2a8a5a;
+        }
+
+        .cloud.failed {
+            border-left-color: #d45a5a;
+            background: #faf0f0;
+        }
+
+        .cloud.failed .q-label {
+            color: #b84a4a;
+        }
+
+        /* нижняя панель с кнопками */
+        .bottom-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px 0 2px;
+            border-top: 2px solid #eaf0f6;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(10px, 2vw, 24px);
+            flex-wrap: wrap;
+        }
+
+        .check-btn {
+            background: #2a6b96;
+            border: none;
+            border-radius: 40px;
+            padding: clamp(6px, 1.2vw, 10px) clamp(20px, 4vw, 44px);
+            color: white;
+            font-weight: 600;
+            font-size: clamp(0.7rem, 1.5vw, 0.85rem);
+            cursor: pointer;
+            transition: 0.2s;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(40, 100, 160, 0.2);
+            white-space: nowrap;
+        }
+
+        .check-btn:hover {
+            background: #1f5a82;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(40, 100, 160, 0.25);
+        }
+
+        .check-btn:disabled {
+            background: #9abbd0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .reset-btn {
+            background: transparent;
+            border: 1.5px solid #c8d8e8;
+            border-radius: 40px;
+            padding: clamp(5px, 1vw, 8px) clamp(14px, 2.5vw, 26px);
+            color: #3d6b8f;
+            font-size: clamp(0.6rem, 1.2vw, 0.7rem);
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+
+        .reset-btn:hover {
+            background: #eaf2fa;
+            border-color: #8bb8d8;
+        }
+
+        .progress-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 4px 0;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .progress-text {
+            color: #3d6b8f;
+            font-size: clamp(0.6rem, 1.2vw, 0.72rem);
+        }
+
+        .progress-text strong {
+            color: #1a3a5c;
+        }
+
+        .win-msg {
+            color: #2a8a5a;
+            font-size: clamp(0.6rem, 1.2vw, 0.75rem);
+            font-weight: 500;
+        }
+
+        /* очень маленькие экраны — переходим на колонку */
+        @media (max-width: 520px) {
+            .card {
+                min-height: auto;
+                padding: 12px 10px 14px;
+                border-radius: 24px;
+            }
+
+            .scheme {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px 6px;
+                padding: 4px 2px;
+                min-height: 280px;
+            }
+
+            .cloud {
+                padding: 6px 6px 8px;
+                border-left-width: 3px;
+                border-radius: 12px 12px 12px 4px;
+            }
+
+            .cloud .question {
+                font-size: 0.55rem;
+                margin-bottom: 3px;
+            }
+
+            .cloud .options label {
+                font-size: 0.5rem;
+                padding: 1px 4px;
+                gap: 4px;
+            }
+
+            .cloud .options input[type="radio"] {
+                width: 11px;
+                height: 11px;
+            }
+
+            .cloud .feedback {
+                font-size: 0.48rem;
+                padding: 3px 6px;
+                min-height: 1.2em;
+            }
+
+            .cloud .feedback .law {
+                font-size: 0.42rem;
+            }
+
+            .cloud .q-label {
+                font-size: 0.45rem;
+                letter-spacing: 0.8px;
+            }
+
+            .opo-center {
+                width: 65px;
+                height: 65px;
+            }
+
+            .opo-center .icon {
+                font-size: 1.5rem;
+            }
+            .opo-center .label {
+                font-size: 0.55rem;
+                padding: 1px 8px;
+            }
+            .opo-center .sub {
+                font-size: 0.4rem;
+                padding: 1px 6px;
+            }
+
+            .check-btn {
+                font-size: 0.65rem;
+                padding: 5px 16px;
+            }
+            .reset-btn {
+                font-size: 0.55rem;
+                padding: 4px 12px;
+            }
+            .progress-text {
+                font-size: 0.55rem;
+            }
+            .win-msg {
+                font-size: 0.55rem;
+            }
+            .header h2 {
+                font-size: 0.85rem;
+            }
+            .status-indicator {
+                font-size: 0.55rem;
+                padding: 2px 8px 2px 6px;
+            }
+            .dot {
+                width: 8px;
+                height: 8px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .scheme {
+                gap: 6px 4px;
+                min-height: 240px;
+            }
+            .cloud {
+                padding: 4px 4px 6px;
+            }
+            .cloud .question {
+                font-size: 0.48rem;
+            }
+            .cloud .options label {
+                font-size: 0.45rem;
+            }
+            .cloud .feedback {
+                font-size: 0.42rem;
+                padding: 2px 4px;
+            }
+            .opo-center {
+                width: 55px;
+                height: 55px;
+            }
+            .opo-center .icon {
+                font-size: 1.2rem;
+            }
+            .opo-center .label {
+                font-size: 0.45rem;
+                padding: 1px 6px;
+            }
+            .check-btn {
+                font-size: 0.55rem;
+                padding: 4px 12px;
+            }
+            .reset-btn {
+                font-size: 0.5rem;
+                padding: 3px 10px;
+            }
+            .header h2 {
+                font-size: 0.7rem;
+            }
+            .status-indicator {
+                font-size: 0.5rem;
+                padding: 2px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="card" id="app">
+    <div class="header">
+        <h2>⚡ Карта рисков <span>ОПО</span></h2>
+        <div class="status-indicator">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">ожидает</span>
+        </div>
+    </div>
+
+    <div class="scheme">
+        <!-- Центр -->
+        <div class="opo-center" id="opoCenter">
+            <div class="icon">🏭</div>
+            <div class="label">ОПО</div>
+            <div class="sub" id="opoSub">I–III класс</div>
+        </div>
+
+        <!-- Облачко 1: Документы -->
+        <div class="cloud cloud-tl" id="cloud0" data-index="0">
+            <div class="q-label">📄 ДОКУМЕНТЫ</div>
+            <div class="question">На какой акт опираемся при страховании ОПО?</div>
+            <div class="options" id="options0">
+                <label><input type="radio" name="q0" value="116-ФЗ"> 116-ФЗ</label>
+                <label><input type="radio" name="q0" value="225-ФЗ"> 225-ФЗ</label>
+                <label><input type="radio" name="q0" value="463-ФЗ"> 463-ФЗ</label>
+            </div>
+            <div class="feedback" id="feedback0"></div>
+        </div>
+
+        <!-- Облачко 2: Сроки -->
+        <div class="cloud cloud-tr" id="cloud1" data-index="1">
+            <div class="q-label">⏳ СРОКИ</div>
+            <div class="question">До какой даты можно работать без лицензии (с уведомлением)?</div>
+            <div class="options" id="options1">
+                <label><input type="radio" name="q1" value="01.01.2026"> 01.01.2026</label>
+                <label><input type="radio" name="q1" value="01.09.2027"> 01.09.2027</label>
+                <label><input type="radio" name="q1" value="31.12.2027"> 31.12.2027</label>
+            </div>
+            <div class="feedback" id="feedback1"></div>
+        </div>
+
+        <!-- Облачко 3: Надзор -->
+        <div class="cloud cloud-bl" id="cloud2" data-index="2">
+            <div class="q-label">🔍 НАДЗОР</div>
+            <div class="question">Какой документ устанавливает особый порядок проверок в новых территориях?</div>
+            <div class="options" id="options2">
+                <label><input type="radio" name="q2" value="Постановление № 227"> Постановление № 227</label>
+                <label><input type="radio" name="q2" value="Постановление № 463"> Постановление № 463</label>
+                <label><input type="radio" name="q2" value="Постановление № 873"> Постановление № 873</label>
+            </div>
+            <div class="feedback" id="feedback2"></div>
+        </div>
+
+        <!-- Облачко 4: Класс -->
+        <div class="cloud cloud-br" id="cloud3" data-index="3">
+            <div class="q-label">🏷️ КЛАСС</div>
+            <div class="question">Эксплуатация объектов I–III класса попадает под временные требования?</div>
+            <div class="options" id="options3">
+                <label><input type="radio" name="q3" value="Да"> Да</label>
+                <label><input type="radio" name="q3" value="Нет"> Нет</label>
+                <label><input type="radio" name="q3" value="Только I класс"> Только I класс</label>
+            </div>
+            <div class="feedback" id="feedback3"></div>
+        </div>
+    </div>
+
+    <div class="bottom-panel">
+        <div class="button-row">
+            <button class="check-btn" id="checkAllBtn">🔍 Проверить все ответы</button>
+            <button class="reset-btn" id="resetBtn">⟳ Сброс</button>
+        </div>
+        <div class="progress-row">
+            <div class="progress-text">✅ решено: <strong id="solvedCount">0</strong> / 4</div>
+            <div id="winContainer"></div>
+            <div style="width: 10px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const questions = [
+            {
+                correct: '225-ФЗ',
+                law: 'ст. 15 Закона № 116-ФЗ, Закон № 225-ФЗ',
+                correctMsg: '✅ Верно! Страхование ОПО — 225-ФЗ.',
+                wrongMsg: '❌ Неверно. Опираемся на 225-ФЗ.'
+            },
+            {
+                correct: '01.09.2027',
+                law: 'Приложение к Постановлению № 463',
+                correctMsg: '✅ Верно! Льготный период до 01.09.2027.',
+                wrongMsg: '❌ Неверно. Правильная дата — 01.09.2027.'
+            },
+            {
+                correct: 'Постановление № 227',
+                law: 'Постановление Правительства РФ № 227',
+                correctMsg: '✅ Верно! Особый порядок — Постановление № 227.',
+                wrongMsg: '❌ Неверно. Это Постановление № 227.'
+            },
+            {
+                correct: 'Да',
+                law: 'Постановление № 463 (временные требования)',
+                correctMsg: '✅ Верно! I–III классы попадают под требования.',
+                wrongMsg: '❌ Неверно. Да, I–III классы охвачены.'
+            }
+        ];
+
+        let solved = [false, false, false, false];
+
+        const feedbackEls = [
+            document.getElementById('feedback0'),
+            document.getElementById('feedback1'),
+            document.getElementById('feedback2'),
+            document.getElementById('feedback3')
+        ];
+        const cloudEls = [
+            document.getElementById('cloud0'),
+            document.getElementById('cloud1'),
+            document.getElementById('cloud2'),
+            document.getElementById('cloud3')
+        ];
+        const radioGroups = [
+            document.querySelectorAll('input[name="q0"]'),
+            document.querySelectorAll('input[name="q1"]'),
+            document.querySelectorAll('input[name="q2"]'),
+            document.querySelectorAll('input[name="q3"]')
+        ];
+
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const opoSub = document.getElementById('opoSub');
+        const opoCenter = document.getElementById('opoCenter');
+        const solvedSpan = document.getElementById('solvedCount');
+        const winContainer = document.getElementById('winContainer');
+        const checkBtn = document.getElementById('checkAllBtn');
+
+        function checkSingle(index) {
+            const radios = radioGroups[index];
+            let selected = null;
+            for (const r of radios) {
+                if (r.checked) { selected = r.value; break; }
+            }
+
+            const feedback = feedbackEls[index];
+            const cloud = cloudEls[index];
+            const q = questions[index];
+
+            if (!selected) {
+                feedback.innerHTML = '⚠️ Выберите вариант ответа.';
+                feedback.className = 'feedback';
+                return false;
+            }
+
+            const isCorrect = (selected === q.correct);
+
+            radios.forEach(r => {
+                const parent = r.closest('label');
+                if (!parent) return;
+                parent.style.background = 'transparent';
+                parent.style.border = 'none';
+                parent.style.borderRadius = '12px';
+                parent.style.padding = '2px 6px';
+                if (r.value === q.correct) {
+                    parent.style.background = '#d4f0e4';
+                    parent.style.border = '1px solid #3ba86a55';
+                } else if (!isCorrect && r.checked) {
+                    parent.style.background = '#f0d4d4';
+                    parent.style.border = '1px solid #d45a5a55';
+                }
+            });
+
+            if (isCorrect) {
+                feedback.innerHTML = `${q.correctMsg} <span class="law">📜 ${q.law}</span>`;
+                feedback.className = 'feedback correct';
+                cloud.classList.add('solved');
+                cloud.classList.remove('failed');
+                radios.forEach(r => r.disabled = true);
+                solved[index] = true;
+            } else {
+                feedback.innerHTML = `${q.wrongMsg} <span class="law">📜 ${q.law}</span>`;
+                feedback.className = 'feedback wrong';
+                cloud.classList.add('failed');
+                cloud.classList.remove('solved');
+            }
+            return true;
+        }
+
+        function checkAll() {
+            let anySelected = false;
+            for (let i = 0; i < 4; i++) {
+                const radios = radioGroups[i];
+                for (const r of radios) {
+                    if (r.checked) { anySelected = true; break; }
+                }
+                if (anySelected) break;
+            }
+
+            if (!anySelected) {
+                for (let i = 0; i < 4; i++) {
+                    if (!feedbackEls[i].innerHTML || feedbackEls[i].innerHTML.includes('Выберите вариант')) {
+                        feedbackEls[i].innerHTML = '⚠️ Выберите вариант.';
+                        feedbackEls[i].className = 'feedback';
+                    }
+                }
+                return;
+            }
+
+            let allCorrect = true;
+            for (let i = 0; i < 4; i++) {
+                if (solved[i]) {
+                    // обновим подсветку
+                    const radios = radioGroups[i];
+                    const q = questions[i];
+                    radios.forEach(r => {
+                        const parent = r.closest('label');
+                        if (!parent) return;
+                        parent.style.background = 'transparent';
+                        parent.style.border = 'none';
+                        if (r.value === q.correct) {
+                            parent.style.background = '#d4f0e4';
+                            parent.style.border = '1px solid #3ba86a55';
+                        }
+                    });
+                    continue;
+                }
+                const result = checkSingle(i);
+                if (!result || !solved[i]) allCorrect = false;
+            }
+
+            updateProgressAndStatus();
+        }
+
+        function updateProgressAndStatus() {
+            const count = solved.filter(v => v).length;
+            solvedSpan.textContent = count;
+
+            if (count === 0) {
+                statusText.textContent = 'ожидает';
+                statusDot.className = 'dot';
+                opoSub.textContent = 'I–III класс · риски';
+                opoCenter.style.boxShadow = '0 0 0 clamp(4px,0.8vw,8px) rgba(60,130,190,0.12), 0 8px 24px rgba(0,20,40,0.15)';
+                opoCenter.style.background = 'radial-gradient(circle at 30% 30%, #4f9fd4, #20638f)';
+                winContainer.innerHTML = '';
+            } else if (count < 4) {
+                statusText.textContent = `${count}/4`;
+                statusDot.className = 'dot';
+                opoSub.textContent = `I–III класс · ${count}/4`;
+                opoCenter.style.boxShadow = '0 0 0 clamp(6px,1vw,10px) rgba(60,130,190,0.18), 0 8px 24px rgba(0,20,40,0.15)';
+                winContainer.innerHTML = '';
+            } else {
+                statusText.textContent = '✅ защищён';
+                statusDot.className = 'dot green';
+                opoSub.textContent = '✅ все риски сняты';
+                opoCenter.style.boxShadow = '0 0 0 clamp(8px,1.2vw,14px) #3ba86a44, 0 8px 28px rgba(0,40,20,0.15)';
+                opoCenter.style.background = 'radial-gradient(circle at 30% 30%, #4fc37e, #1f8a4a)';
+                winContainer.innerHTML = '<span class="win-msg">🏆 ОПО защищён!</span>';
+            }
+        }
+
+        function resetAll() {
+            solved = [false, false, false, false];
+            for (let i = 0; i < 4; i++) {
+                feedbackEls[i].innerHTML = '';
+                feedbackEls[i].className = 'feedback';
+                cloudEls[i].classList.remove('solved', 'failed');
+                const radios = radioGroups[i];
+                radios.forEach(r => {
+                    r.checked = false;
+                    r.disabled = false;
+                    const parent = r.closest('label');
+                    if (parent) {
+                        parent.style.background = 'transparent';
+                        parent.style.border = 'none';
+                    }
+                });
+            }
+            opoCenter.style.background = 'radial-gradient(circle at 30% 30%, #4f9fd4, #20638f)';
+            opoCenter.style.boxShadow = '0 0 0 clamp(4px,0.8vw,8px) rgba(60,130,190,0.12), 0 8px 24px rgba(0,20,40,0.15)';
+            statusDot.className = 'dot';
+            statusText.textContent = 'ожидает';
+            opoSub.textContent = 'I–III класс · риски';
+            winContainer.innerHTML = '';
+            updateProgressAndStatus();
+        }
+
+        function init() {
+            document.getElementById('checkAllBtn').addEventListener('click', checkAll);
+            document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+            for (let i = 0; i < 4; i++) {
+                radioGroups[i].forEach(r => {
+                    r.addEventListener('change', function() {
+                        if (solved[i]) {
+                            solved[i] = false;
+                            cloudEls[i].classList.remove('solved', 'failed');
+                            feedbackEls[i].innerHTML = '';
+                            feedbackEls[i].className = 'feedback';
+                            radioGroups[i].forEach(rr => rr.disabled = false);
+                            radioGroups[i].forEach(rr => {
+                                const parent = rr.closest('label');
+                                if (parent) {
+                                    parent.style.background = 'transparent';
+                                    parent.style.border = 'none';
+                                }
+                            });
+                            updateProgressAndStatus();
+                        } else {
+                            if (feedbackEls[i].innerHTML.includes('Выберите вариант')) {
+                                feedbackEls[i].innerHTML = '';
+                                feedbackEls[i].className = 'feedback';
+                            }
+                        }
+                    });
+                });
+            }
+
+            updateProgressAndStatus();
+        }
+
+        init();
+    })();
+</script>
+</body>
+</html>
