@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Квиз «Правда или миф»</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: #ffffff;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    color: #0f2540;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .quiz-container {
+    width: 700px;
+    height: 350px;
+    background: #ffffff;
+    border: 1.5px solid #1e4e8c;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* HEADER */
+  .header {
+    background: #1e4e8c;
+    color: #fff;
+    padding: 9px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-title .icon {
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    color: #1e4e8c;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .counter {
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.15);
+    padding: 3px 11px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.35);
+  }
+
+  /* PROGRESS */
+  .progress-bar {
+    height: 3px;
+    background: #e5edf7;
+    flex-shrink: 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #1e4e8c;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  /* BODY */
+  .body {
+    flex: 1;
+    padding: 14px 20px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .screen { display: none; height: 100%; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* START */
+  #screen-start.active {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .start-icon {
+    width: 44px;
+    height: 44px;
+    background: #1e4e8c;
+    color: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 16px;
+    color: #0f2540;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .subtitle {
+    color: #4a6284;
+    font-size: 12px;
+    line-height: 1.45;
+    max-width: 520px;
+    margin-bottom: 12px;
+  }
+
+  .info-chips {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .chip {
+    background: #eef4fb;
+    color: #1e4e8c;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid #d3e2f2;
+  }
+
+  /* BUTTONS */
+  .btn {
+    background: #1e4e8c;
+    color: #fff;
+    border: none;
+    padding: 9px 26px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+  }
+
+  .btn:hover { background: #16406f; }
+
+  .btn-next {
+    padding: 7px 20px;
+    font-size: 11px;
+  }
+
+  /* QUESTION */
+  #screen-question.active {
+    justify-content: space-between;
+  }
+
+  .statement-box {
+    background: #eef4fb;
+    border-left: 3px solid #1e4e8c;
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+
+  .statement-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #1e4e8c;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .statement-text {
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 500;
+    color: #0f2540;
+  }
+
+  .answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .answer-btn {
+    padding: 10px 10px;
+    border: 1.5px solid #c6d6e9;
+    background: #ffffff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    color: #1e4e8c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .answer-btn:hover:not(:disabled) {
+    border-color: #1e4e8c;
+    background: #eef4fb;
+  }
+
+  .answer-btn:disabled { cursor: not-allowed; }
+
+  .answer-btn.correct {
+    background: #e6f0fb;
+    border-color: #1e4e8c;
+    color: #1e4e8c;
+    font-weight: 700;
+  }
+
+  .answer-btn.wrong {
+    background: #fdecec;
+    border-color: #c53030;
+    color: #c53030;
+  }
+
+  /* FEEDBACK */
+  .feedback {
+    display: none;
+    background: #eef4fb;
+    border-left: 3px solid #1e4e8c;
+    border-radius: 6px;
+    padding: 9px 13px;
+    margin-top: 8px;
+    flex: 1;
+    overflow: auto;
+  }
+
+  .feedback.show { display: block; }
+
+  .feedback.wrong-fb {
+    background: #fdf2f2;
+    border-left-color: #c53030;
+  }
+
+  .feedback-title {
+    font-weight: 700;
+    font-size: 11px;
+    margin-bottom: 3px;
+    color: #1e4e8c;
+  }
+
+  .feedback.wrong-fb .feedback-title { color: #c53030; }
+
+  .feedback-text {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #33475f;
+  }
+
+  .next-wrap {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+  }
+
+  /* RESULT */
+  #screen-result.active {
+    overflow: auto;
+  }
+
+  .result-screen {
+    text-align: center;
+    width: 100%;
+  }
+
+  .result-circle {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 6px;
+    border-radius: 50%;
+    background: #1e4e8c;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #eef4fb;
+  }
+
+  .result-score {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .result-total {
+    font-size: 9px;
+    opacity: 0.9;
+    margin-top: 2px;
+  }
+
+  .result-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    color: #0f2540;
+  }
+
+  .result-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 9px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: #eef4fb;
+    color: #1e4e8c;
+    border: 1px solid #c6d6e9;
+  }
+
+  .result-message {
+    color: #4a6284;
+    font-size: 11.5px;
+    line-height: 1.45;
+    max-width: 520px;
+    margin: 0 auto 8px;
+  }
+
+  .review-list {
+    text-align: left;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .review-list h3 {
+    font-size: 10px;
+    color: #1e4e8c;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .review-item {
+    display: flex;
+    gap: 8px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    font-size: 10.5px;
+    line-height: 1.3;
+    align-items: flex-start;
+    background: #eef4fb;
+    color: #33475f;
+  }
+
+  .review-item.no { background: #fdf2f2; }
+
+  .review-mark {
+    font-size: 11px;
+    flex-shrink: 0;
+    font-weight: 700;
+    color: #1e4e8c;
+  }
+
+  .review-item.no .review-mark { color: #c53030; }
+
+  .result-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="quiz-container">
+  <div class="header">
+    <div class="header-title">
+      <div class="icon">?</div>
+      <span>Правда или миф?</span>
+    </div>
+    <div class="counter" id="counter">Вопрос 1 / 5</div>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+
+  <div class="body">
+
+    <!-- START -->
+    <div class="screen active" id="screen-start">
+      <div class="start-icon">🛡</div>
+      <h1>Противоаварийные тренировки:<br>правда или миф?</h1>
+      <p class="subtitle">
+        Проверьте, насколько хорошо вы понимаете, зачем нужны учения на опасных производственных объектах.
+      </p>
+      <div class="info-chips">
+        <div class="chip">5 утверждений</div>
+        <div class="chip">Разбор каждого ответа</div>
+      </div>
+      <button class="btn" onclick="startQuiz()">Начать квиз</button>
+    </div>
+
+    <!-- QUESTION -->
+    <div class="screen" id="screen-question">
+      <div>
+        <div class="statement-box">
+          <div class="statement-label">Утверждение</div>
+          <div class="statement-text" id="statement-text"></div>
+        </div>
+
+        <div class="answers">
+          <button class="answer-btn" id="btn-true" onclick="answer('Правда')">Правда</button>
+          <button class="answer-btn" id="btn-false" onclick="answer('Миф')">Миф</button>
+        </div>
+
+        <div class="feedback" id="feedback">
+          <div class="feedback-title" id="feedback-title"></div>
+          <div class="feedback-text" id="feedback-text"></div>
+        </div>
+      </div>
+
+      <div class="next-wrap" id="next-wrap" style="display:none;">
+        <button class="btn btn-next" onclick="nextQuestion()">Далее →</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="screen" id="screen-result">
+      <div class="result-screen">
+        <div class="result-circle">
+          <div class="result-score" id="result-score">0</div>
+          <div class="result-total" id="result-total">из 5</div>
+        </div>
+        <div class="result-title" id="result-title"></div>
+        <div class="result-badge" id="result-badge"></div>
+        <p class="result-message" id="result-message"></p>
+        <div class="review-list" id="review-list"></div>
+        <div class="result-actions">
+          <button class="btn btn-next" onclick="restartQuiz()">Пройти заново</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const questions = [
+    {
+      text: "«Противоаварийные тренировки нужны только оперативному персоналу».",
+      correct: "Миф",
+      explanation: "Тренировать нужно не только оперативный и управленческий персонал, но и всех работников, занятых в производственном процессе. Их задача — не мешать и не создавать паники, а выполнить свои шаги по инструкции: отключить оборудование, покинуть опасную зону, сообщить о происшествии."
+    },
+    {
+      text: "«Если авария случается раз в сто лет, можно не тратить время на учения».",
+      correct: "Миф",
+      explanation: "Именно редкость аварии делает подготовку критичной: неподготовленные сотрудники растеряются и усугубят последствия. Авария может обернуться разрушениями, выбросами ядовитых веществ, травмами и огромными убытками."
+    },
+    {
+      text: "«Тренировки проводятся только для галочки перед проверкой Ростехнадзора».",
+      correct: "Миф",
+      explanation: "Грамотные тренировки ведут к реальной выгоде: меньше штрафов, сокращение простоев, сохранение репутации. Формальный подход опасен — отсутствие обучения грозит штрафом до 1 млн руб. и приостановкой деятельности до 90 суток."
+    },
+    {
+      text: "«Периодичность тренировок одинакова для всех ОПО».",
+      correct: "Миф",
+      explanation: "Периодичность зависит от отрасли и прописана в ФНП. Например: на АЗС — не реже 1 раза в квартал, на объектах с сероводородом — 1 раз в месяц, комплексные учения по разливам нефти — каждые 3 года."
+    },
+    {
+      text: "«После реальной аварии внеплановая тренировка не нужна».",
+      correct: "Миф",
+      explanation: "Внеплановые тренировки как раз проводят после реальных аварий, при изменениях оборудования или технологии, а также если уровень подготовки недостаточен. После каждой тренировки программу корректируют с учётом ошибок и новых рисков."
+    }
+  ];
+
+  let currentIndex = 0;
+  let score = 0;
+  let userAnswers = [];
+
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const statementText = document.getElementById('statement-text');
+  const btnTrue = document.getElementById('btn-true');
+  const btnFalse = document.getElementById('btn-false');
+  const feedback = document.getElementById('feedback');
+  const feedbackTitle = document.getElementById('feedback-title');
+  const feedbackText = document.getElementById('feedback-text');
+  const nextWrap = document.getElementById('next-wrap');
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function startQuiz() {
+    currentIndex = 0;
+    score = 0;
+    userAnswers = [];
+    showScreen('screen-question');
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const q = questions[currentIndex];
+    counter.textContent = `Вопрос ${currentIndex + 1} / ${questions.length}`;
+    progress.style.width = `${(currentIndex / questions.length) * 100}%`;
+    statementText.textContent = q.text;
+
+    btnTrue.disabled = false;
+    btnFalse.disabled = false;
+    btnTrue.classList.remove('correct', 'wrong');
+    btnFalse.classList.remove('correct', 'wrong');
+
+    feedback.classList.remove('show', 'wrong-fb');
+    nextWrap.style.display = 'none';
+  }
+
+  function answer(choice) {
+    const q = questions[currentIndex];
+    const isCorrect = choice === q.correct;
+    if (isCorrect) score++;
+    userAnswers.push({ choice, correct: isCorrect });
+
+    btnTrue.disabled = true;
+    btnFalse.disabled = true;
+
+    const correctBtn = q.correct === 'Правда' ? btnTrue : btnFalse;
+    const wrongBtn   = q.correct === 'Правда' ? btnFalse : btnTrue;
+
+    correctBtn.classList.add('correct');
+
+    if (isCorrect) {
+      feedbackTitle.textContent = '✓ Верно';
+      feedback.className = 'feedback show';
+    } else {
+      wrongBtn.classList.add('wrong');
+      feedbackTitle.textContent = '✕ Не совсем так';
+      feedback.className = 'feedback show wrong-fb';
+    }
+
+    feedbackText.textContent = q.explanation;
+    nextWrap.style.display = 'flex';
+
+    const btnNext = nextWrap.querySelector('.btn-next');
+    btnNext.textContent = currentIndex === questions.length - 1 ? 'Показать результат' : 'Далее →';
+  }
+
+  function nextQuestion() {
+    currentIndex++;
+    if (currentIndex < questions.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }
+
+  function showResult() {
+    progress.style.width = '100%';
+    counter.textContent = 'Готово';
+
+    document.getElementById('result-score').textContent = score;
+    document.getElementById('result-total').textContent = `из ${questions.length}`;
+
+    const titleEl = document.getElementById('result-title');
+    const badgeEl = document.getElementById('result-badge');
+    const msgEl = document.getElementById('result-message');
+
+    if (score === 5) {
+      titleEl.textContent = 'Отличный результат!';
+      badgeEl.textContent = 'Эксперт';
+      msgEl.textContent = 'Вы отлично понимаете, зачем нужны противоаварийные тренировки.';
+    } else if (score === 4) {
+      titleEl.textContent = 'Хороший уровень';
+      badgeEl.textContent = 'Уверенные знания';
+      msgEl.textContent = 'Почти всё верно. Обратите внимание на разбор ниже.';
+    } else if (score === 3) {
+      titleEl.textContent = 'Есть над чем поработать';
+      badgeEl.textContent = 'Базовый уровень';
+      msgEl.textContent = 'Основные идеи уловили, но часть мифов ещё держится.';
+    } else {
+      titleEl.textContent = 'Нужно повторить материал';
+      badgeEl.textContent = 'Требуется обучение';
+      msgEl.textContent = 'Мифы пока сильнее фактов. Вернитесь к уроку.';
+    }
+
+    const reviewList = document.getElementById('review-list');
+    reviewList.innerHTML = '<h3>Ваши ответы</h3>';
+    questions.forEach((q, i) => {
+      const ua = userAnswers[i];
+      const item = document.createElement('div');
+      item.className = 'review-item ' + (ua && ua.correct ? 'ok' : 'no');
+      const mark = ua && ua.correct ? '✓' : '✕';
+      item.innerHTML = `<span class="review-mark">${mark}</span><span>${q.text}</span>`;
+      reviewList.appendChild(item);
+    });
+
+    showScreen('screen-result');
+  }
+
+  function restartQuiz() {
+    showScreen('screen-start');
+    progress.style.width = '0%';
+    counter.textContent = `Вопрос 1 / ${questions.length}`;
+    document.getElementById('review-list').innerHTML = '';
+  }
+</script>
+
+</body>
+</html>
