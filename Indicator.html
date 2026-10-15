@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Самопроверка ОПО — чат-бот</title>
+<style>
+  :root{
+    --white:#ffffff;
+    --bg:#f4f8ff;
+    --panel:#eef4ff;
+    --panel2:#e2ecff;
+    --bot:#f1f6ff;
+    --bot-border:#d4e4ff;
+    --user:#2563eb;
+    --user2:#1d4ed8;
+    --accent:#2563eb;
+    --accent-light:#60a5fa;
+    --ok:#16a34a;
+    --ok-bg:#e8f8ee;
+    --warn:#d97706;
+    --warn-bg:#fff4e0;
+    --bad:#dc2626;
+    --bad-bg:#feeceb;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#dbe6f7;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    height:100%;
+    margin:0;
+  }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:#ffffff;
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:20px;
+  }
+
+  /* ==== Основной контейнер 700×560 ==== */
+  .app{
+    width:700px;
+    height:560px;
+    background:var(--white);
+    border-radius:20px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    border:1px solid var(--border);
+    position:relative;
+  }
+
+  /* ==== Шапка ==== */
+  .header{
+    padding:12px 18px;
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+  }
+  .avatar{
+    width:38px;height:38px;
+    border-radius:11px;
+    background:rgba(255,255,255,.2);
+    backdrop-filter:blur(4px);
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;
+    flex-shrink:0;
+    border:1px solid rgba(255,255,255,.3);
+  }
+  .header .info{flex:1;min-width:0;}
+  .header h1{
+    font-size:14.5px;
+    margin:0 0 2px;
+    font-weight:600;
+  }
+  .header p{
+    margin:0;
+    font-size:11.5px;
+    color:#dbeafe;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .online{
+    width:7px;height:7px;border-radius:50%;
+    background:#4ade80;
+    box-shadow:0 0 8px #4ade80;
+  }
+  .reset-btn{
+    background:rgba(255,255,255,.15);
+    border:1px solid rgba(255,255,255,.3);
+    color:#fff;
+    padding:7px 11px;
+    border-radius:8px;
+    font-size:11.5px;
+    cursor:pointer;
+    transition:all .2s;
+    font-family:inherit;
+  }
+  .reset-btn:hover{background:rgba(255,255,255,.28);}
+
+  /* ==== Прогресс ==== */
+  .progress-mini{
+    height:4px;
+    background:var(--panel);
+    flex-shrink:0;
+  }
+  .progress-mini-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#60a5fa,#2563eb);
+    transition:width .4s ease;
+  }
+
+  /* ==== Чат ==== */
+  .chat{
+    flex:1;
+    overflow-y:auto;
+    padding:16px 16px 8px;
+    scroll-behavior:smooth;
+    background:var(--bg);
+  }
+  .chat::-webkit-scrollbar{width:8px;}
+  .chat::-webkit-scrollbar-track{background:transparent;}
+  .chat::-webkit-scrollbar-thumb{background:#c7d9f2;border-radius:99px;}
+  .chat::-webkit-scrollbar-thumb:hover{background:#a8c2e6;}
+
+  .container{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .msg{
+    display:flex;
+    gap:9px;
+    animation:pop .35s ease both;
+    max-width:100%;
+  }
+  @keyframes pop{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .msg .bubble{
+    padding:10px 13px;
+    border-radius:15px;
+    font-size:13.5px;
+    line-height:1.5;
+    max-width:calc(100% - 46px);
+    word-wrap:break-word;
+    white-space:pre-wrap;
+  }
+  .msg.bot .bubble{
+    background:#fff;
+    border:1px solid var(--bot-border);
+    border-bottom-left-radius:4px;
+    color:var(--text);
+  }
+  .msg.user{
+    flex-direction:row-reverse;
+  }
+  .msg.user .bubble{
+    background:linear-gradient(135deg,var(--user),var(--user2));
+    color:#fff;
+    border-bottom-right-radius:4px;
+  }
+  .msg .mini-ava{
+    width:30px;height:30px;
+    border-radius:9px;
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;
+    background:linear-gradient(135deg,#3b82f6,#2563eb);
+    color:#fff;
+  }
+  .msg.user .mini-ava{
+    background:var(--panel2);
+    color:var(--accent);
+    border:1px solid var(--border);
+  }
+
+  .badge{
+    display:inline-block;
+    background:#dbeafe;
+    color:#1d4ed8;
+    padding:2px 8px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:600;
+    margin-bottom:6px;
+    letter-spacing:.2px;
+  }
+  .apply{
+    display:block;
+    margin-top:7px;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+  }
+  .apply b{color:#475569;font-weight:600;}
+
+  .typing{
+    display:inline-flex;
+    gap:4px;
+    padding:4px 0;
+  }
+  .typing span{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--accent-light);
+    animation:blink 1.2s infinite;
+  }
+  .typing span:nth-child(2){animation-delay:.2s;}
+  .typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{
+    0%,60%,100%{opacity:.3;transform:translateY(0);}
+    30%{opacity:1;transform:translateY(-3px);}
+  }
+
+  /* ==== Кнопки ==== */
+  .actions{
+    padding:10px 14px 12px;
+    background:#fff;
+    border-top:1px solid var(--border);
+    flex-shrink:0;
+    min-height:64px;
+    display:flex;
+    align-items:center;
+  }
+  .container-actions{
+    width:100%;
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    flex:1;
+    min-width:100px;
+    padding:11px 16px;
+    border-radius:11px;
+    border:none;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .18s ease;
+    font-family:inherit;
+    color:#fff;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn.yes{
+    background:linear-gradient(135deg,#ef4444,#dc2626);
+  }
+  .btn.no{
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+  }
+  .btn.restart{
+    background:linear-gradient(135deg,#3b82f6,#2563eb);
+    max-width:300px;
+    margin:0 auto;
+  }
+
+  /* ==== Итоговая карточка ==== */
+  .summary-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:13px;
+    padding:12px 14px;
+    margin-top:8px;
+  }
+  .summary-card .row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:7px 0;
+    font-size:13px;
+    border-bottom:1px dashed var(--border);
+    align-items:flex-start;
+  }
+  .summary-card .row:last-child{border-bottom:none;}
+  .summary-card .row .name{color:var(--muted);flex:1;}
+  .summary-card .row .val{font-weight:600;white-space:nowrap;flex-shrink:0;}
+  .summary-card .row .val.ok{color:var(--ok);}
+  .summary-card .row .val.bad{color:var(--bad);}
+
+  .final-status{
+    padding:11px 14px;
+    border-radius:11px;
+    margin-top:8px;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13.5px;
+    line-height:1.4;
+  }
+  .final-status.ok{background:var(--ok-bg);color:var(--ok);border:1px solid #b7e4c7;}
+  .final-status.warn{background:var(--warn-bg);color:var(--warn);border:1px solid #fcd9a3;}
+  .final-status.bad{background:var(--bad-bg);color:var(--bad);border:1px solid #fbc4c0;}
+
+  /* ==== Адаптив: если экран меньше 700×560 ==== */
+  @media (max-width:740px), (max-height:600px){
+    body{padding:0;}
+    .app{
+      width:100vw;
+      height:100vh;
+      max-width:700px;
+      max-height:560px;
+      border-radius:0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="avatar">🛡️</div>
+    <div class="info">
+      <h1>Инспектор-бот · Самопроверка ОПО</h1>
+      <p><span class="online"></span><span id="status">Задаю вопросы по 14 индикаторам риска</span></p>
+    </div>
+    <button class="reset-btn" onclick="restart()">↻ Заново</button>
+  </div>
+  <div class="progress-mini"><div class="progress-mini-fill" id="miniFill"></div></div>
+
+  <div class="chat" id="chat">
+    <div class="container" id="container"></div>
+  </div>
+
+  <div class="actions" id="actions">
+    <div class="container-actions" id="actionsInner"></div>
+  </div>
+</div>
+
+<script>
+const indicators = [
+  { t: "Три и более инцидентов в течение одного календарного года",
+    a: "ОПО всех классов опасности." },
+  { t: "Авария на аналогичном ОПО",
+    a: "ОПО III, IV класса, на которых за два года до аварии не было проверок." },
+  { t: "Не оформлена лицензия на эксплуатацию ВПХОПО в течение 4 месяцев после регистрации в реестре ОПО",
+    a: "ОПО I–III класса опасности." },
+  { t: "В течение 2 лет после регистрации заключения ЭПБ на консервацию или ликвидацию ОПО не исключён из реестра",
+    a: "ОПО III, IV класса, на которых за два года до регистрации ЭПБ не было проверок." },
+  { t: "После ликвидации организации (или ИП) её ОПО продолжает числиться в реестре",
+    a: "ОПО III, IV класса опасности." },
+  { t: "Срок эксплуатации ТУ истёк более года назад, но новое заключение ЭПБ не зарегистрировано, и ТУ не выведено из эксплуатации",
+    a: "ОПО III, IV класса, на которых в течение года не было проверок." },
+  { t: "Срок эксплуатации ЗиС истёк более года назад, но новое заключение ЭПБ не зарегистрировано, и объект не выведен из эксплуатации",
+    a: "ОПО III, IV класса, если в течение года на них не было проверок." },
+  { t: "Эксперт выдал заведомо ложное заключение ЭПБ, и за 2 года до этого он уже выдавал заключения для той же организации",
+    a: "ОПО III, IV класса, если после выдачи заключения на них не было проверок." },
+  { t: "Организация в течение 2 лет после получения заключения ЭПБ на техперевооружение не внесла изменения в реестр ОПО",
+    a: "ОПО III, IV класса, если организация не уведомила об изменении или отмене планов по техперевооружению." },
+  { t: "Организация занимается пиротехническими изделиями без лицензии на эксплуатацию ВПХОПО",
+    a: "ВПХОПО I–III класса опасности." },
+  { t: "ОПО, внесённый в реестр до 15 марта 2013 года, не прошёл перерегистрацию с присвоением класса опасности",
+    a: "ОПО всех классов опасности." },
+  { t: "Нет регистрации ОПО в течение 6 месяцев после согласования техпроекта",
+    a: "ОПО с наименованием карьер, рудник, шахта, разрез и их разновидности, если за этот период на них не было проверок." },
+  { t: "Отсутствие согласованных планов и схем горных работ на текущий год у юрлица, эксплуатирующего действующий ОПО",
+    a: "Любые ОПО, связанные с пользованием недрами (действующие)." },
+  { t: "Непоступление от эксплуатирующей организации заявления о внесении изменений в реестр лицензий в части мест осуществления деятельности или выполняемых работ в течение 4 месяцев со дня регистрации нового ОПО",
+    a: "Эксплуатирующие организации." }
+];
+
+const chat = document.getElementById('chat');
+const container = document.getElementById('container');
+const actionsInner = document.getElementById('actionsInner');
+const miniFill = document.getElementById('miniFill');
+const statusEl = document.getElementById('status');
+
+let state = { index: 0, yes: [] };
+
+function scrollBottom(){
+  requestAnimationFrame(()=>{
+    chat.scrollTop = chat.scrollHeight;
+  });
+}
+
+function addBot(html, useTyping){
+  return new Promise(resolve => {
+    const el = document.createElement('div');
+    el.className = 'msg bot';
+    el.innerHTML = `<div class="mini-ava">🛡️</div><div class="bubble">${useTyping ? '<span class="typing"><span></span><span></span><span></span></span>' : html}</div>`;
+    container.appendChild(el);
+    scrollBottom();
+    if (useTyping){
+      setTimeout(()=>{
+        el.querySelector('.bubble').innerHTML = html;
+        scrollBottom();
+        resolve();
+      }, 500);
+    } else {
+      resolve();
+    }
+  });
+}
+
+function addUser(text){
+  const el = document.createElement('div');
+  el.className = 'msg user';
+  el.innerHTML = `<div class="mini-ava">👤</div><div class="bubble"></div>`;
+  el.querySelector('.bubble').textContent = text;
+  container.appendChild(el);
+  scrollBottom();
+}
+
+function setActions(html){ actionsInner.innerHTML = html; }
+function clearActions(){ actionsInner.innerHTML = ''; }
+
+function updateProgress(){
+  const pct = state.index / indicators.length * 100;
+  miniFill.style.width = pct + '%';
+  statusEl.textContent = `Вопрос ${Math.min(state.index + 1, indicators.length)} из ${indicators.length}`;
+}
+
+function askQuestion(){
+  if (state.index >= indicators.length){
+    return showResults();
+  }
+  const i = state.index;
+  const ind = indicators[i];
+  updateProgress();
+
+  const html = `<span class="badge">Индикатор ${i+1} из ${indicators.length}</span>
+${ind.t}
+<span class="apply"><b>Применяют для:</b> ${ind.a}</span>
+<br><br>Есть ли это в вашей организации?`;
+
+  addBot(html, true).then(()=>{
+    setActions(`
+      <button class="btn yes" onclick="answer(true)">Да, есть</button>
+      <button class="btn no" onclick="answer(false)">Нет / не наш случай</button>
+    `);
+    scrollBottom();
+  });
+}
+
+function answer(isYes){
+  clearActions();
+  addUser(isYes ? 'Да, есть' : 'Нет / не наш случай');
+  if (isYes) state.yes.push(state.index);
+  state.index++;
+  setTimeout(()=>{
+    if (isYes){
+      addBot('⚠️ Понял, отметил как <b>риск</b>.', false).then(askQuestion);
+    } else {
+      askQuestion();
+    }
+  }, 300);
+}
+
+function showResults(){
+  miniFill.style.width = '100%';
+  statusEl.textContent = 'Готово! Показываю результат';
+
+  const count = state.yes.length;
+
+  addBot('Спасибо! Прошлись по всем 14 индикаторам.\n\nВот что получилось:', true).then(()=>{
+
+    const rows = indicators.map((ind, i) => {
+      const hit = state.yes.includes(i);
+      return `<div class="row"><span class="name">${i+1}. ${ind.t}</span><span class="val ${hit?'bad':'ok'}">${hit?'⚠ риск':'✓ ок'}</span></div>`;
+    }).join('');
+
+    let statusClass = 'ok', statusText = '';
+    if (count === 0){
+      statusClass = 'ok';
+      statusText = '🟢 Индикаторов риска нет — низкая вероятность проверки';
+    } else if (count <= 3){
+      statusClass = 'warn';
+      statusText = `🟡 Выявлено ${count} индикатор(а) — средний риск. Стоит устранить замечания.`;
+    } else {
+      statusClass = 'bad';
+      statusText = `🔴 Выявлено ${count} индикаторов — высокий риск внеплановой проверки Ростехнадзора.`;
+    }
+
+    const html = `
+      <span class="badge">Результат самопроверки</span>
+      <div class="summary-card">
+        <div class="row"><span class="name">Всего индикаторов</span><span class="val">${indicators.length}</span></div>
+        <div class="row"><span class="name">Отмечено как «есть»</span><span class="val bad">${count}</span></div>
+        <div class="row"><span class="name">Не выявлено</span><span class="val ok">${indicators.length - count}</span></div>
+      </div>
+      <div class="final-status ${statusClass}">${statusText}</div>
+      <span class="apply">Это ориентировочная самопроверка. Точный перечень проверок определяет Ростехнадзор.</span>
+      <br>
+      <span class="apply"><b>Детализация по пунктам:</b></span>
+      <div class="summary-card" style="margin-top:8px;">${rows}</div>
+    `;
+    return addBot(html, true);
+  }).then(()=>{
+    setActions(`<button class="btn restart" onclick="restart()">🔄 Пройти заново</button>`);
+    scrollBottom();
+  });
+}
+
+function restart(){
+  container.innerHTML = '';
+  clearActions();
+  state = { index: 0, yes: [] };
+  miniFill.style.width = '0%';
+  statusEl.textContent = 'Задаю вопросы по 14 индикаторам риска';
+  addBot(`Привет! Я помогу быстро провести самопроверку вашей организации по <b>14 индикаторам риска</b> Ростехнадзора.\n\nЯ задам по каждому вопрос — отвечайте честно, никуда ничего не отправляется.`, false)
+    .then(()=> setTimeout(askQuestion, 350));
+}
+
+restart();
+</script>
+</body>
+</html>
